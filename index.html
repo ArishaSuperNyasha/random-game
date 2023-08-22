@@ -6,8 +6,96 @@
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=yes">
     <link rel="stylesheet" href="style.css">
     <style>
+        body {
+            width: 100vw; height: 100vh;
+            margin: 0;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .field {
+            width: 50vh; height: 50vh;
+            max-width: 90vw; max-height: 90vw;
+            background-color: rgb(48, 145, 112);
+            border: 2.5vh dashed rgb(77, 58, 58);
+            position: relative;
+        }
+
+        .snake, .apple {
+            width: 2.5vh; height: 2.5vh;
+            position: absolute;
+        }
+
+        .snake {
+            background-color: rgb(230, 144, 45);
+            z-index: 1;
+        }
+
+        .apple {
+            background-color: red;
+            z-index: 0;
+        }
     </style>
 </head>
 <body>
+    <div class="field">
+        <div class="snake"></div>
+        <div class="apple"></div>
+    </div>
+
+    <script>
+        let timerID;
+        let snake = document.querySelector('.snake');
+        document.documentElement.addEventListener("keyup", (event) => {
+            if ((event.keyCode <= 40) && (event.keyCode >= 37)) {
+                clearInterval(timerID);
+                let left = parseFloat(snake.style.left), top = parseFloat(snake.style.top);
+                if (isNaN(left)) left = 0;
+                if (isNaN(top)) top = 0;
+                timerID = setInterval(() => {
+                    let pos, style;
+                    if (event.keyCode === 37 || event.keyCode === 39) {
+                        pos = left;
+                        style = 'left';
+                    }
+                    else {
+                        pos = top;
+                        style = 'top';
+                    }
+                    event.keyCode > 38 ? pos += 2.5 : pos -= 2.5;
+                    console.log(left);
+                    if (style === 'left') {
+                        snake.style.left = `${pos}vh`;
+                        left = pos;
+                    }
+                    else {
+                        snake.style.top = `${pos}vh`;
+                        top = pos;
+                    }
+
+
+                    if ((left < 0) || (left > 47.5) || (top < 0) || (top > 47.5)) {
+                        clearInterval(timerID);
+                        snake.style.left = 0; 
+                        snake.style.top = 0;
+                    } 
+                }, 500);
+            }
+
+            console.log(event.keyCode);
+        }, {capture: true});
+
+
+        let apple = document.querySelector('.apple');
+        function addApple () {
+            function getRandomInt() {
+                return (Math.floor(Math.random() * 19) * 2.5).toFixed(1);
+            }
+            let top = getRandomInt();
+            let left = getRandomInt();
+            apple.style.top = `${top}vh`;
+            apple.style.left = `${left}vh`;
+        }
+        addApple();
+    </script>
 </body>
 </html>
