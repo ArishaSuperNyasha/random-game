@@ -10,6 +10,13 @@
             width: 100vw; height: 100vh;
             margin: 0;
             display: flex; justify-content: center; align-items: center;
+            flex-direction: column;
+        }
+
+        h1 {
+            font-family: sans-serif;
+            font-size: 5vh;
+            position: absolute; top: 12vh;
         }
 
         .field {
@@ -37,42 +44,45 @@
     </style>
 </head>
 <body>
+    <h1>Score: 00</h1>
     <div class="field">
         <div class="snake" data-prevCoords=""></div>
         <div class="apple"></div>
     </div>
 
     <script>
+        let prevKeyCode;
         let timerID;
         let snake = document.querySelector('.snake');
         let longSnake = [snake];
         document.documentElement.addEventListener("keyup", (event) => {
-            if ((event.keyCode <= 40) && (event.keyCode >= 37)) {
+            if ((event.keyCode <= 40) && (event.keyCode >= 37) && (Math.abs(prevKeyCode - event.keyCode) !== 2)) {
+                prevKeyCode = event.keyCode;
                 clearInterval(timerID);
                 let left = parseFloat(snake.style.left), top = parseFloat(snake.style.top);
                 if (isNaN(left)) left = 0;
                 if (isNaN(top)) top = 0;
                 timerID = setInterval(() => {
-                    let pos, style;
-                    if (event.keyCode === 37 || event.keyCode === 39) {
-                        pos = left;
-                        style = 'left';
-                    }
-                    else {
-                        pos = top;
-                        style = 'top';
-                    }
                     snake.setAttribute('data-prevCoords', `${left},${top}`);
-                    event.keyCode > 38 ? pos += 2.5 : pos -= 2.5;
-                    console.log(left);
-                    if (style === 'left') {
-                        snake.style.left = `${pos}vh`;
-                        left = pos;
+                    if (event.keyCode > 38) {
+                        if (event.keyCode === 39) {
+                            left += 2.5;
+                        }
+                        else { 
+                            top += 2.5;
+                        }
                     }
                     else {
-                        snake.style.top = `${pos}vh`;
-                        top = pos;
+                        if (event.keyCode === 37) {
+                            left -= 2.5;
+                        }
+                        else { 
+                            top -= 2.5;
+                        }
                     }
+                    snake.style.left = `${left}vh`;                          
+                    snake.style.top = `${top}vh`;
+                    //console.log(left);
 
 
                     for (i = 0; i < longSnake.length - 1; i++) {
@@ -84,18 +94,22 @@
 
 
 
+                    let bodyCoordsArr = Array.from(document.querySelectorAll('.snake-body')).map(item => item.getAttribute('data-prevCoords'));
                     //если натыкается на забор, то координаты обнуляются
-                    if ((left < 0) || (left > 47.5) || (top < 0) || (top > 47.5)) {
+                    if ((left < 0) || (left > 47.5) || (top < 0) || (top > 47.5) || (
+                        bodyCoordsArr.reduce((accum, item) => ((left === Number(item.split(',')[0])) && (top === Number(item.split(',')[1]))) ? accum = true : accum = accum, false)
+                    )) {
                         clearInterval(timerID);
                         snake.style.left = 0; 
                         snake.style.top = 0;
                         longSnake = [snake];
                         for (let item of document.querySelectorAll('.snake-body')) item.remove();
+                        document.querySelector('h1').textContent = `Score: 00`;
                     } 
 
                     //если столкнётся змея и яблоко
                     if ((snake.style.left === apple.style.left) && (snake.style.top === apple.style.top)) {
-                        addApple();
+                        addApple({left, top, bodyCoordsArr});
                         let partOfSnake = document.createElement('div');
                         partOfSnake.classList.add('snake-body');
                         document.querySelector('.field').append(partOfSnake);
@@ -104,8 +118,11 @@
                         partOfSnake.style.left = `${lft}vh`;
                         partOfSnake.setAttribute('data-prevCoords', `${lft},${tp}`);
                         longSnake.push(partOfSnake);
+
+                        let score = Number(document.querySelector('h1').textContent.split(':')[1]);
+                        document.querySelector('h1').textContent = `Score: ${score + 10}`;
                     }
-                }, 250);
+                }, 180);
             }
 
             console.log(event.keyCode);
@@ -114,14 +131,25 @@
 
 
         let apple = document.querySelector('.apple');
-        function addApple () {
+        function addApple ({left: snakeLeft = 0, top: snakeTop = 0, bodyCoordsArr = []} = {}) {
             function getRandomInt() {
-                return (Math.floor(Math.random() * 19) * 2.5).toFixed(1);
+                return Number((Math.floor(Math.random() * 20) * 2.5).toFixed(1).replace('.0', ''));
             }
-            let top = getRandomInt();
-            let left = getRandomInt();
-            apple.style.top = `${top}vh`;
-            apple.style.left = `${left}vh`;
+            let tp = getRandomInt();
+            let lft = getRandomInt();
+            [snakeLeft, snakeTop] = [Number(snakeLeft), Number(snakeTop)];
+            while ( (tp === snakeTop && lft === snakeLeft) ||
+                bodyCoordsArr.reduce((accum, item) => ((Number(item.split(',')[0]) === lft) && (Number(item.split(',')[1]) === tp)) ? accum = true : accum = accum, false)
+                ) {
+                tp = getRandomInt();
+                lft = getRandomInt();
+                console.log(`Я В ЦИКЛЕ \nкоординаты яблока ${lft}, ${tp}\nкоординаты тела змеи ${bodyCoordsArr}\nкоординаты головы ${snakeLeft}, ${snakeTop}`);
+                console.log(bodyCoordsArr);
+                console.log(lft, tp);
+                console.log(snakeLeft, snakeTop);
+            }
+            apple.style.top = `${tp}vh`;
+            apple.style.left = `${lft}vh`;
         }
         addApple();
     </script>
